@@ -1,6 +1,7 @@
 export const responderKaz = (req, res) => {
     const { mensagem } = req.body;
   
+    // ola
     const texto = mensagem.toLowerCase();
   
     let resposta = "Desculpe, não entendi. Pode repetir?";
