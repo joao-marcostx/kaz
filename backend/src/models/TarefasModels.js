@@ -87,7 +87,6 @@ export const listarUmTrarefa = async (req, res) => {
   }
 };
 
-
 export const editarTarefa = async (req, res) => {
   const sql = `UPDATE tarefas SET titulo = ?, descricao = ? WHERE id_tarefas = ?`;
   const params = [req.body.titulo, req.body.descricao, req.params.id_tarefas];
@@ -100,11 +99,11 @@ export const editarTarefa = async (req, res) => {
       mensagem: "Erro servidor",
       code: error.code,
       sql: error.sqlMessage,
-    })
+    });
 
     return res.status(500).json({
       mensagem: "Erro ao editar tarefa",
       erro: error.message,
-    })
+    });
   }
 };

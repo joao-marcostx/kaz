@@ -1,10 +1,15 @@
 export const responderKaz = (req, res) => {
   const { mensagem } = req.body;
 
-  // ola
+  // Verifica se a mensagem foi enviada
+  if (!mensagem || typeof mensagem !== "string") {
+    return res.status(400).json({ erro: "Mensagem inválida ou ausente." });
+  }
+
   const texto = mensagem.toLowerCase();
 
   let resposta = "Desculpe, não entendi. Pode repetir?";
+  
   if (
     texto.includes("oi") ||
     texto.includes("olá") ||
@@ -27,23 +32,28 @@ export const responderKaz = (req, res) => {
       "Tudo vai dar certo!",
     ];
     resposta = frases[Math.floor(Math.random() * frases.length)];
-  } else if (texto.includes("qual a data")) {
+  } else if (
+    texto.includes("qual a data") ||
+    texto.includes("qual a data atual") ||
+    texto.includes("data") ||
+    texto.includes("data atual")
+  ) {
     const dataAtual = new Date().toLocaleDateString("pt-BR");
     resposta = `Hoje é ${dataAtual}`;
   } else if (texto.includes("qual a hora")) {
     const horaAtual = new Date().toLocaleTimeString("pt-BR");
     resposta = `Agora é ${horaAtual}`;
   } else if (texto.includes("qual a temperatura")) {
-    const temperatura = 25;
+    const temperatura = 25; // valor fixo por enquanto
     resposta = `A temperatura atual é ${temperatura} graus Celsius.`;
   } else if (texto.includes("qual a velocidade do vento")) {
-    const velocidade = 10;
+    const velocidade = 10; // valor fixo por enquanto
     resposta = `A velocidade do vento atual é ${velocidade} m/s.`;
   } else if (texto.includes("qual a pressao atmosferica")) {
-    const pressao = 1013.25;
-    resposta = `A pressão atmosferica atual é ${pressao} hPa.`;
-  } else if (texto.includes("qual é o seu nome ?")) {
-    resposta = "Meu nome é Kaz o seu assistente virtual!";
+    const pressao = 1013.25; // valor fixo por enquanto
+    resposta = `A pressão atmosférica atual é ${pressao} hPa.`;
+  } else if (texto.includes("qual é o seu nome")) {
+    resposta = "Meu nome é Kaz, o seu assistente virtual!";
   }
 
   res.json({ resposta });

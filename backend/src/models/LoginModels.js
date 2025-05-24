@@ -1,5 +1,7 @@
 import db from "../conexao.js";
 import mysql from "mysql2/promise";
+import axios from "axios";
+
 
 const conexao = mysql.createPool(db);
 
@@ -56,4 +58,31 @@ export const cadastrarUsuario = async (req, res) => {
       });
     }
   };
+  export const climaPorCidade = async (req, res) => {
+  const { cidade } = req.body;
+
   
+
+  try {
+    const apiKey = "";
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
+      cidade
+    )}&appid=${apiKey}&units=metric&lang=pt`;
+
+    const resposta = await axios.get(url);
+    const dados = resposta.data;
+
+    const clima = {
+      cidade: dados.name,
+      temperatura: dados.main.temp,
+      descricao: dados.weather[0].description,
+      umidade: dados.main.humidity,
+      vento: dados.wind.speed,
+    };
+
+    res.json(clima);
+  } catch (erro) {
+    console.error("Erro ao buscar clima:", erro.message);
+    res.status(500).json({ erro: "Erro ao buscar clima" });
+  }
+};

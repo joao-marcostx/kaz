@@ -1,10 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./Chat.module.css";
 
 const Chat = () => {
   const [mensagem, setMensagem] = useState("");
   const [conversa, setConversa] = useState([]);
+
+  const idUsuario = 52; // por enquanto fixo
+
+  useEffect(() => {
+    const carregarConversas = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3001/conversas/${idUsuario}`);
+        const mensagens = response.data.map((msg) => ({
+          remetente: msg.remetente === "kaz" ? "Kaz" : "Você",
+          texto: msg.mensagem,
+        }));
+        setConversa(mensagens);
+      } catch (error) {
+        console.error("Erro ao carregar conversas:", error);
+      }
+    };
+
+    carregarConversas();
+  }, []);
 
   const enviarMensagem = async (e) => {
     e.preventDefault();
@@ -14,10 +33,24 @@ const Chat = () => {
 
     try {
       const response = await axios.post("http://localhost:3001/kaz", {
+        mensagem: mensagem,
+      });
+
+      const respostaKaz = response.data.resposta;
+
+      await axios.post("http://localhost:3001/salvar", {
+        id_usuario: idUsuario,
+        remetente: "usuario",
         mensagem,
       });
 
-      novaConversa.push({ remetente: "Kaz", texto: response.data.resposta });
+      await axios.post("http://localhost:3001/salvar", {
+        id_usuario: idUsuario,
+        remetente: "kaz",
+        mensagem: respostaKaz,
+      });
+
+      novaConversa.push({ remetente: "Kaz", texto: respostaKaz });
     // eslint-disable-next-line no-unused-vars
     } catch (error) {
       novaConversa.push({
@@ -37,9 +70,7 @@ const Chat = () => {
         {conversa.map((msg, index) => (
           <div
             key={index}
-            className={
-              msg.remetente === "Você" ? styles.usuario : styles.kaz
-            }
+            className={msg.remetente === "Você" ? styles.usuario : styles.kaz}
           >
             <strong>{msg.remetente}:</strong> {msg.texto}
           </div>
