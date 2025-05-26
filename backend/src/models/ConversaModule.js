@@ -1,5 +1,6 @@
 import db from "../conexao.js";
 import mysql from "mysql2/promise";
+import axios from "axios";
 
 const conexao = mysql.createPool(db);
 
@@ -86,5 +87,33 @@ export const listarConversasPorUsuario = async (req, res) => {
       mensagem: "Erro ao buscar conversas do usuário",
       erro: error.message,
     });
+  }
+};
+
+
+export const responderIA = async (req, res) => {
+  const pergunta = req.body.pergunta?.trim();
+
+  if (!pergunta) {
+    return res.status(400).json({ erro: "Mensagem inválida ou ausente." });
+  }
+
+  try {
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/models/google/flan-t5-base",
+      { inputs: pergunta },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HUGGINGFACE_API_TOKEN}`,
+        },
+      }
+    );
+
+    const resposta = response.data?.[0]?.generated_text || "Não entendi sua pergunta.";
+    res.json({ resposta });
+
+  } catch (error) {
+    console.error("Erro ao consultar a Hugging Face:", error.response?.data || error.message);
+    res.status(500).json({ erro: "Erro ao processar resposta inteligente." });
   }
 };

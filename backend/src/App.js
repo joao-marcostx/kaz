@@ -1,14 +1,16 @@
 import express from "express";
 import cors from "cors";
 import dotenv from 'dotenv';
-dotenv.config();
+
+
 import { loginUsuario, cadastrarUsuario, climaPorCidade } from "./models/LoginModels.js";
 import { responderKaz } from "./controllers/KazController.js";
 import { criarTarefa, deletarTarefa, editarTarefa, listarUmTrarefa, mostrarTarefas } from "./models/TarefasModels.js";
-import { listarConversasPorUsuario, ListarumaConversa, mostrarConversas, salvarConversa } from "./models/ConversaModule.js";
+import { listarConversasPorUsuario, ListarumaConversa, mostrarConversas, responderIA, salvarConversa } from "./models/ConversaModule.js";
 
 const app = express();
 const porta = 3001;
+dotenv.config();
 
 app.use(cors());
 app.use(express.json());
@@ -33,6 +35,11 @@ app.get("/mostrandoconversa/:id", ListarumaConversa)
 app.get("/conversas/:id_usuario", listarConversasPorUsuario);
 // clima
 app.get("/clima", climaPorCidade);
+// resposta inteligente
+app.post("/kaz-inteligente", responderIA);
+console.log("Token:", process.env.HUGGINGFACE_API_TOKEN);
+
+
 
 
 

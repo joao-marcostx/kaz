@@ -64,7 +64,7 @@ export const cadastrarUsuario = async (req, res) => {
   
 
   try {
-    const apiKey = "";
+    const apiKey = "79d44b26c7d72b13f7adb6f4cb345b4d";
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
       cidade
     )}&appid=${apiKey}&units=metric&lang=pt`;
