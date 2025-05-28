@@ -38,6 +38,7 @@ app.get("/clima", climaPorCidade);
 // resposta inteligente
 app.post("/kaz-inteligente", responderIA);
 console.log("Token:", process.env.HUGGINGFACE_API_TOKEN);
+console.log("Token:", process.env.API_CLIMA);
 
 
 

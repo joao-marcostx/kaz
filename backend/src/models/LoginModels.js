@@ -58,31 +58,34 @@ export const cadastrarUsuario = async (req, res) => {
       });
     }
   };
-  export const climaPorCidade = async (req, res) => {
-  const { cidade } = req.body;
+ export const climaPorCidade = async (req, res) => {
+  let { cidade } = req.body;
 
-  
+  // Expressão regular para tentar extrair o nome da cidade no fim da frase
+  const regex = /clima (?:em|de|da|do)?\s*([\w\s]+)$/i;
+  const match = cidade.match(regex);
+
+  if (match) {
+    cidade = match[1].trim();
+  }
 
   try {
-    const apiKey = "79d44b26c7d72b13f7adb6f4cb345b4d";
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
       cidade
-    )}&appid=${apiKey}&units=metric&lang=pt`;
+    )}&appid=${process.env.API_CLIMA}&units=metric&lang=pt`;
 
     const resposta = await axios.get(url);
     const dados = resposta.data;
 
-    const clima = {
+    return {
       cidade: dados.name,
       temperatura: dados.main.temp,
       descricao: dados.weather[0].description,
       umidade: dados.main.humidity,
       vento: dados.wind.speed,
     };
-
-    res.json(clima);
   } catch (erro) {
-    console.error("Erro ao buscar clima:", erro.message);
-    res.status(500).json({ erro: "Erro ao buscar clima" });
+    throw new Error("Cidade não encontrada ou erro ao buscar clima.");
   }
+
 };
