@@ -51,6 +51,7 @@ export const responderKaz = async (req, res) => {
   res.json({ resposta });
 };
 
+
 const buscarClimaPorCidade = async (cidade) => {
   try {
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
