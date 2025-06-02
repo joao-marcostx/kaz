@@ -1,45 +1,83 @@
-/* Fonte moderna */
+/* Paleta de cores e variáveis customizadas */
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --border-color: #30363d;
+  --text-primary: #c9d1d9;
+  --accent-blue: #58a6ff;
+  --accent-green: #238636;
+  --accent-green-hover: #2ea043;
+  --shadow-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Reset e estilo global */
 body {
   margin: 0;
   padding: 0;
-  background-color: #0d1117;
+  background-color: var(--bg-primary);
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  color: #c9d1d9;
+  color: var(--text-primary);
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
 }
 
-/* Container geral */
+/* Container principal */
 .container {
   width: 100%;
   max-width: 800px;
-  background-color: #161b22;
+  background-color: var(--bg-secondary);
   border-radius: 16px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 20px var(--shadow-color);
   padding: 30px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  background-image: 
+    radial-gradient(circle at 100% 100%, rgba(88, 166, 255, 0.03), transparent 400px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent);
 }
 
-/* Caixa de chat com rolagem suave e mais espaço */
+/* Caixa de chat */
 .chatBox {
   height: 500px;
   overflow-y: auto;
-  background-color: #21262d;
+  background-color: var(--bg-tertiary);
   padding: 20px;
   border-radius: 12px;
-  scrollbar-width: thin;
-  scrollbar-color: #444 #21262d;
   display: flex;
   flex-direction: column;
   gap: 12px;
   scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #444 var(--bg-tertiary);
+  background-image: 
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent 10%),
+    radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.01), transparent 300px);
 }
 
-/* Bolhas de mensagem modernas */
+/* Scrollbar Webkit */
+.chatBox::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatBox::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+}
+
+.chatBox::-webkit-scrollbar-thumb {
+  background: #484f58;
+  border-radius: 3px;
+}
+
+.chatBox::-webkit-scrollbar-thumb:hover {
+  background: #5a636e;
+}
+
+/* Bolhas de mensagem */
 .usuario, .kaz {
   max-width: 75%;
   padding: 12px 16px;
@@ -48,52 +86,60 @@ body {
   font-size: 15px;
   word-wrap: break-word;
   white-space: pre-wrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  animation: messageAppear 0.3s ease forwards;
+  backdrop-filter: blur(30px);
 }
 
 .usuario {
   align-self: flex-end;
-  background: #238636;
+  background: linear-gradient(to bottom right, var(--accent-green-hover), var(--accent-green));
   color: #fff;
-  border-top-right-radius: 0;
+  border-top-right-radius: 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .kaz {
   align-self: flex-start;
-  background: #316dca;
+  background: linear-gradient(to bottom right, #4184e0, #316dca);
   color: #fff;
-  border-top-left-radius: 0;
+  border-top-left-radius: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Formulário fixo no final do container */
+/* Campo de entrada e botão */
 .formulario {
   display: flex;
   gap: 12px;
-  border-top: 1px solid #30363d;
+  border-top: 1px solid var(--border-color);
   padding-top: 16px;
 }
 
-/* Campo de entrada */
 input {
   flex: 1;
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid #30363d;
-  background-color: #0d1117;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
   color: #fff;
   font-size: 15px;
   transition: border-color 0.3s, box-shadow 0.3s;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 input:focus {
-  border-color: #58a6ff;
+  border-color: var(--accent-blue);
   box-shadow: 0 0 0 2px #58a6ff55;
   outline: none;
 }
 
-/* Botão moderno */
+input::placeholder {
+  color: #484f58;
+}
+
 button {
   padding: 14px 20px;
-  background: #238636;
+  background: var(--accent-green);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -101,10 +147,14 @@ button {
   font-weight: bold;
   font-size: 15px;
   transition: background 0.3s, transform 0.2s;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 1px rgba(255, 255, 255, 0.1);
 }
 
 button:hover {
-  background: #2ea043;
+  background: var(--accent-green-hover);
   transform: translateY(-2px);
 }
 
@@ -112,7 +162,19 @@ button:active {
   transform: scale(0.97);
 }
 
-/* Mobile friendly */
+/* Animação */
+@keyframes messageAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsivo */
 @media (max-width: 600px) {
   .container {
     padding: 20px;
@@ -120,9 +182,17 @@ button:active {
 
   .chatBox {
     height: 400px;
+    padding: 16px;
+  }
+
+  .usuario, .kaz {
+    max-width: 85%;
+    font-size: 14px;
+    padding: 12px 14px;
   }
 
   input, button {
     font-size: 14px;
+    padding: 12px;
   }
 }
