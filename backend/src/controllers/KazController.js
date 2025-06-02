@@ -1,4 +1,10 @@
 import axios from "axios";
+import db from "../conexao.js";
+import mysql from "mysql2/promise";
+
+const conexao = mysql.createPool(db);
+
+const idUsuario = 52; // Ajuste conforme o usuário logado, se tiver autenticação
 
 export const responderKaz = async (req, res) => {
   const { mensagem } = req.body;
@@ -10,13 +16,38 @@ export const responderKaz = async (req, res) => {
   const texto = mensagem.toLowerCase().trim();
   console.log("Mensagem recebida:", texto);
 
+  try {
+    // 1) Buscar última mensagem do usuário parecida com a mensagem atual
+    const [msgUsuario] = await conexao.execute(
+      `SELECT id, mensagem, data FROM conversas 
+       WHERE id_usuario = ? AND remetente = 'usuario' AND mensagem LIKE ? 
+       ORDER BY data DESC LIMIT 1`,
+      [idUsuario, `%${texto}%`]
+    );
+
+    if (msgUsuario.length > 0) {
+      const dataMsgUsuario = msgUsuario[0].data;
+
+      // 2) Buscar resposta do Kaz que veio logo depois da mensagem do usuário
+      const [respostaKaz] = await conexao.execute(
+        `SELECT mensagem FROM conversas 
+         WHERE id_usuario = ? AND remetente = 'kaz' AND data > ? 
+         ORDER BY data ASC LIMIT 1`,
+        [idUsuario, dataMsgUsuario]
+      );
+
+      if (respostaKaz.length > 0) {
+        return res.json({ resposta: respostaKaz[0].mensagem });
+      }
+    }
+  } catch (erro) {
+    console.error("Erro ao consultar histórico de conversas:", erro.message);
+  }
+
+  // Se não achou resposta aprendida, respondo com respostas padrão
   let resposta = "Desculpe, não entendi. Pode repetir?";
 
-  if (
-    texto.includes("oi") ||
-    texto.includes("olá") ||
-    texto.includes("ola")
-  ) {
+  if (texto.includes("oi") || texto.includes("olá") || texto.includes("ola")) {
     resposta = "Olá! Em que posso te ajudar?";
   } else if (texto.includes("horas") || texto.includes("qual a hora")) {
     const horaAtual = new Date().toLocaleTimeString("pt-BR");
@@ -31,16 +62,13 @@ export const responderKaz = async (req, res) => {
       "Tudo vai dar certo!",
     ];
     resposta = frases[Math.floor(Math.random() * frases.length)];
-  } else if (
-    texto.includes("qual a data") ||
-    texto.includes("data atual")
-  ) {
+  } else if (texto.includes("qual a data") || texto.includes("data atual")) {
     const dataAtual = new Date().toLocaleDateString("pt-BR");
     resposta = `Hoje é ${dataAtual}`;
-  } else if (texto.includes("qual é o seu nome" ) || texto.includes("nome")) {
+  } else if (texto.includes("qual é o seu nome") || texto.includes("nome")) {
     resposta = "Meu nome é Kaz, o seu assistente virtual!";
-  } else if (texto.includes("clima de") || texto.includes("clima") ) {
-    const cidade = texto.split("clima de")  [1]?.trim();
+  } else if (texto.includes("clima de") || texto.includes("clima")) {
+    const cidade = texto.split("clima de")[1]?.trim();
     if (cidade) {
       resposta = await buscarClimaPorCidade(cidade);
     } else {
@@ -48,9 +76,23 @@ export const responderKaz = async (req, res) => {
     }
   }
 
-  res.json({ resposta });
-};
+  // Salvar mensagem do usuário e resposta do Kaz no banco para aprendizado
+  try {
+    await conexao.execute(
+      "INSERT INTO conversas (id_usuario, remetente, mensagem, data) VALUES (?, 'usuario', ?, NOW())",
+      [idUsuario, texto]
+    );
 
+    await conexao.execute(
+      "INSERT INTO conversas (id_usuario, remetente, mensagem, data) VALUES (?, 'kaz', ?, NOW())",
+      [idUsuario, resposta]
+    );
+  } catch (erro) {
+    console.error("Erro ao salvar conversa no banco:", erro.message);
+  }
+
+  return res.json({ resposta });
+};
 
 const buscarClimaPorCidade = async (cidade) => {
   try {
