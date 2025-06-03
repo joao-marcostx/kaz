@@ -63,6 +63,16 @@ const Chat = () => {
     setMensagem("");
   };
 
+  const deletarConversa = async () => {
+    console.log("Deletando conversa...");
+    try {
+      await axios.delete(`http://localhost:3001/deletarconversa/${idUsuario}`);
+      setConversa([]);
+    } catch (error) {
+      console.error("Erro ao deletar conversa:", error);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h2>Assistente Kaz</h2>
@@ -83,6 +93,8 @@ const Chat = () => {
           value={mensagem}
           onChange={(e) => setMensagem(e.target.value)}
         />
+        <button type="button" onClick={deletarConversa}>Deletar Conversa</button>
+        <button type="submit" onClick={() => setMensagem("")}>limpar</button>
         <button type="submit">Enviar</button>
       </form>
     </div>

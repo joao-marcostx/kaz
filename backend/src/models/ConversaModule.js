@@ -90,6 +90,26 @@ export const listarConversasPorUsuario = async (req, res) => {
   }
 };
 
+export const deletarConversa = async (req, res) => {
+  const sql = "DELETE FROM conversas WHERE id_usuario = ?";
+  const params = [req.params.id_usuario];
+
+  try {
+    await conexao.query(sql, params);
+    return res.status(200).json({ mensagem: "Conversa deletada com sucesso!" });
+  } catch (error) {
+    console.error({
+      mensagem: "Erro servidor",
+      code: error.code,
+      sql: error.sqlMessage,
+    });
+    return res.status(500).json({
+      mensagem: "Erro ao deletar conversa",
+      erro: error.message,
+    });
+  }
+};
+
 
 export const responderIA = async (req, res) => {
   const pergunta = req.body.pergunta?.trim();
