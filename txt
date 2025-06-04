@@ -1,0 +1,39 @@
+-- Criação do banco de dados
+CREATE DATABASE IF NOT EXISTS kaz_assistente;
+USE kaz_assistente;
+
+-- Tabela de usuários
+CREATE TABLE IF NOT EXISTS usuarios (
+  id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  senha VARCHAR(255) NOT NULL
+);
+
+-- Tabela de conversas
+CREATE TABLE IF NOT EXISTS conversas (
+  id_conversa INT AUTO_INCREMENT PRIMARY KEY,
+  id_usuario INT NOT NULL,
+  pergunta TEXT NOT NULL,
+  resposta TEXT NOT NULL,
+  data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+-- Tabela de tarefas
+CREATE TABLE IF NOT EXISTS tarefas (
+  id_tarefa INT AUTO_INCREMENT PRIMARY KEY,
+  id_usuario INT NOT NULL,
+  titulo VARCHAR(255) NOT NULL,
+  descricao TEXT,
+  concluida BOOLEAN DEFAULT FALSE,
+  data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+-- Tabela de respostas pré-programadas
+CREATE TABLE IF NOT EXISTS respostas (
+  id_resposta INT AUTO_INCREMENT PRIMARY KEY,
+  categoria VARCHAR(100) NOT NULL,         -- Ex: saudacao, clima, hora
+  pergunta_padrao TEXT NOT NULL,           -- Ex: "Que horas são?"
+  resposta_padrao TEXT NOT NULL            -- Ex: "Agora são 15:00."
+);

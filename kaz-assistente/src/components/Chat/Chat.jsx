@@ -7,7 +7,7 @@ const Chat = () => {
   const [mensagem, setMensagem] = useState("");
   const [conversa, setConversa] = useState([]);
 
-  const idUsuario = 52; // por enquanto fixo
+  const idUsuario = 1; // por enquanto fixo
   const navigate = useNavigate();
 
   useEffect(() => {
