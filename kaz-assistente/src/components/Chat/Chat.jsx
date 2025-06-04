@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./Chat.module.css";
+import { useNavigate } from "react-router-dom";
 
 const Chat = () => {
   const [mensagem, setMensagem] = useState("");
   const [conversa, setConversa] = useState([]);
 
-  const idUsuario = 1; // por enquanto fixo
+  const idUsuario = 52; // por enquanto fixo
+  const navigate = useNavigate();
 
   useEffect(() => {
     const carregarConversas = async () => {
@@ -93,9 +95,11 @@ const Chat = () => {
           value={mensagem}
           onChange={(e) => setMensagem(e.target.value)}
         />
+        
+        <button type="submit">Enviar</button>
         <button type="button" onClick={deletarConversa}>Deletar Conversa</button>
         <button type="submit" onClick={() => setMensagem("")}>limpar</button>
-        <button type="submit">Enviar</button>
+        <button type="submit" onClick={() => navigate("/tarefas ")}>ver suas tarefas</button>
       </form>
     </div>
   );
