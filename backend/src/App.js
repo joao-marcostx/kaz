@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from 'dotenv';
-
+import documentoRoutes from "./router/documentoRoutes.js";
 
 import { loginUsuario, cadastrarUsuario, climaPorCidade } from "./models/LoginModels.js";
 import { responderKaz } from "./controllers/KazController.js";
@@ -40,6 +40,8 @@ app.get("/clima", climaPorCidade);
 app.post("/kaz-inteligente", responderIA);
 console.log("Token:", process.env.HUGGINGFACE_API_TOKEN);
 console.log("Token:", process.env.API_CLIMA);
+// docs
+app.use('/api', documentoRoutes);
 
 
 
