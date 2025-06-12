@@ -13,15 +13,15 @@ CREATE TABLE IF NOT EXISTS usuarios (
 CREATE TABLE IF NOT EXISTS conversas (
   id_conversa INT AUTO_INCREMENT PRIMARY KEY,
   id_usuario INT NOT NULL,
-  pergunta TEXT NOT NULL,
-  resposta TEXT NOT NULL,
-  data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+  remetente ENUM('usuario', 'kaz') NOT NULL,
+  mensagem TEXT NOT NULL,
+  data_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- Tabela de tarefas
 CREATE TABLE IF NOT EXISTS tarefas (
-  id_tarefa INT AUTO_INCREMENT PRIMARY KEY,
+  id_tarefas INT AUTO_INCREMENT PRIMARY KEY,
   id_usuario INT NOT NULL,
   titulo VARCHAR(255) NOT NULL,
   descricao TEXT,
@@ -33,7 +33,15 @@ CREATE TABLE IF NOT EXISTS tarefas (
 -- Tabela de respostas pré-programadas
 CREATE TABLE IF NOT EXISTS respostas (
   id_resposta INT AUTO_INCREMENT PRIMARY KEY,
-  categoria VARCHAR(100) NOT NULL,         -- Ex: saudacao, clima, hora
-  pergunta_padrao TEXT NOT NULL,           -- Ex: "Que horas são?"
-  resposta_padrao TEXT NOT NULL            -- Ex: "Agora são 15:00."
+  categoria VARCHAR(100) NOT NULL,
+  pergunta_padrao TEXT NOT NULL,
+  resposta_padrao TEXT NOT NULL
+);
+
+-- Tabela de documentos
+CREATE TABLE IF NOT EXISTS documentos (
+  id_documento INT AUTO_INCREMENT PRIMARY KEY,
+  titulo VARCHAR(255) NOT NULL,
+  conteudo LONGTEXT NOT NULL,
+  data_upload DATETIME DEFAULT CURRENT_TIMESTAMP
 );

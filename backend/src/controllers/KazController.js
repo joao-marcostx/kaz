@@ -1,6 +1,7 @@
 import axios from "axios";
 import mysql from "mysql2/promise";
 import db from "../conexao.js";
+import { responderPorDocumento, buscarRespostaDocumento } from "../models/DocumentoModels.js";
 
 const conexao = mysql.createPool(db);
 const idUsuario = 1; // ID fixo para testes
@@ -27,43 +28,18 @@ function contemSinonimo(texto, palavraBase) {
 
 export const responderKaz = async (req, res) => {
   const { mensagem } = req.body;
-
   if (!mensagem || typeof mensagem !== "string") {
     return res.status(400).json({ erro: "Mensagem inválida ou ausente." });
   }
-
   const texto = mensagem.toLowerCase().trim();
-  console.log("Mensagem recebida:", texto);
 
-  try {
-    // 1. Buscar a última mensagem parecida do usuário
-    const [msgUsuario] = await conexao.execute(
-      `SELECT id, mensagem, data_envio FROM conversas 
-       WHERE id_usuario = ? AND remetente = 'usuario' AND mensagem LIKE ? 
-       ORDER BY data_envio DESC LIMIT 1`,
-      [idUsuario, `%${texto}%`]
-    );
-
-    if (msgUsuario.length > 0) {
-      const dataMsgUsuario = msgUsuario[0].data_envio;
-
-      // 2. Buscar a próxima resposta do Kaz após essa mensagem
-      const [respostaKaz] = await conexao.execute(
-        `SELECT mensagem FROM conversas 
-         WHERE id_usuario = ? AND remetente = 'kaz' AND data_envio > ? 
-         ORDER BY data_envio ASC LIMIT 1`,
-        [idUsuario, dataMsgUsuario]
-      );
-
-      if (respostaKaz.length > 0) {
-        return res.json({ resposta: respostaKaz[0].mensagem });
-      }
-    }
-  } catch (erro) {
-    console.error("Erro ao consultar histórico de conversas:", erro.message);
+  // 1. Tenta buscar resposta nos documentos
+  const respostaDoc = await buscarRespostaDocumento(mensagem);
+  if (respostaDoc) {
+    return res.json({ resposta: respostaDoc });
   }
 
-  // Se não encontrou no histórico, verificar palavras-chave
+  // 2. Se não encontrou, usa as respostas automáticas
   let resposta = "Desculpe, não entendi. Pode repetir?";
 
   if (contemSinonimo(texto, "oi")) {
@@ -93,24 +69,6 @@ export const responderKaz = async (req, res) => {
     } else {
       resposta = "Por favor, informe o nome da cidade após 'clima de'.";
     }
-  } else if (contemSinonimo(texto, "calculo") || texto.match(/\d+[\+\-\*\/\%\^\(\)\s]*\d+/)) {
-    resposta = calcularExpressao(texto);
-  } else if (texto.includes("quem descobriu o brasil")) {
-    resposta = "O Brasil foi oficialmente descoberto por Pedro Álvares Cabral em 22 de abril de 1500.";
-  } else if (texto.includes("capital do brasil")) {
-    resposta = "A capital do Brasil é Brasília.";
-  } else if (texto.includes("planeta mais próximo do sol")) {
-    resposta = "O planeta mais próximo do Sol é Mercúrio.";
-  } else if (texto.includes("velocidade da luz")) {
-    resposta = "A velocidade da luz no vácuo é de aproximadamente 299.792.458 metros por segundo.";
-  } else if (texto.includes("raiz quadrada de 144")) {
-    resposta = "A raiz quadrada de 144 é 12.";
-  } else if (texto.includes("quem foi albert einstein")) {
-    resposta = "Albert Einstein foi um físico teórico alemão, autor da teoria da relatividade geral.";
-  } else if (texto.includes("fórmula da água") || texto.includes("formula da agua")) {
-    resposta = "A fórmula da água é H2O.";
-  } else if (texto.includes("estados")) {
-    resposta = "O Brasil possui 26 estados e 1 Distrito Federal.";
   }
 
   return res.json({ resposta });

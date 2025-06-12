@@ -75,6 +75,36 @@ const Chat = () => {
     }
   };
 
+  const [arquivo, setArquivo] = useState(null);
+  const [mensagemUpload, setMensagemUpload] = useState("");
+
+  const handleArquivo = (e) => {
+    setArquivo(e.target.files[0]);
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!arquivo) {
+      setMensagemUpload("Selecione um arquivo para enviar.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("arquivo", arquivo);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/upload-documento",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      setMensagemUpload(response.data.mensagem);
+    } catch (error) {
+      setMensagemUpload("Erro ao enviar documento.");
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h2>Assistente Kaz</h2>
@@ -101,6 +131,13 @@ const Chat = () => {
         <button type="submit" onClick={() => setMensagem("")}>limpar</button>
         <button type="submit" onClick={() => navigate("/tarefas ")}>ver suas tarefas</button>
       </form>
+      <div>
+        <form onSubmit={handleUpload}>
+          <input type="file" onChange={handleArquivo} accept=".txt,.pdf,.docx" />
+          <button type="submit">Enviar Documento</button>
+        </form>
+        {mensagemUpload && <p>{mensagemUpload}</p>}
+      </div>
     </div>
   );
 };

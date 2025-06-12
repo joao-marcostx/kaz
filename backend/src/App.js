@@ -2,15 +2,18 @@ import express from "express";
 import cors from "cors";
 import dotenv from 'dotenv';
 import documentoRoutes from "./router/documentoRoutes.js";
+import multer from "multer";
 
 import { loginUsuario, cadastrarUsuario, climaPorCidade } from "./models/LoginModels.js";
 import { responderKaz } from "./controllers/KazController.js";
 import { criarTarefa, deletarTarefa, editarTarefa, listarUmTrarefa, mostrarTarefas } from "./models/TarefasModels.js";
 import { deletarConversa, listarConversasPorUsuario, ListarumaConversa, mostrarConversas, responderIA, salvarConversa } from "./models/ConversaModule.js";
+import { uploadDocumento, responderPorDocumento } from "./models/DocumentoModels.js";
 
 const app = express();
 const porta = 3001;
 dotenv.config();
+const upload = multer({ dest: "uploads/" });
 
 app.use(cors());
 app.use(express.json());
@@ -38,8 +41,9 @@ app.delete("/deletarconversa/:id_usuario", deletarConversa);
 app.get("/clima", climaPorCidade);
 // resposta inteligente
 app.post("/kaz-inteligente", responderIA);
-console.log("Token:", process.env.HUGGINGFACE_API_TOKEN);
-console.log("Token:", process.env.API_CLIMA);
+// documentos
+app.post("/upload-documento", upload.single("arquivo"), uploadDocumento);
+app.post("/pergunta-documento", responderPorDocumento);
 // docs
 app.use('/api', documentoRoutes);
 
