@@ -85,6 +85,7 @@ const Chat = () => {
         setConversa(prev => [...prev, { remetente: "Kaz", texto: respostaKaz }]);
       }, 1000);
 
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setTimeout(() => {
         setIsTyping(false);
@@ -139,6 +140,7 @@ const Chat = () => {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setMensagemUpload("Erro ao enviar documento.");
     }
