@@ -100,6 +100,7 @@ const Chat = () => {
         }
       );
       setMensagemUpload(response.data.mensagem);
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setMensagemUpload("Erro ao enviar documento.");
     }

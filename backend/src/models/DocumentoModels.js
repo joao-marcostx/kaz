@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import pdfParse from "pdf-parse";
 import textract from "textract";
+import natural from "natural";
 
 const conexao = mysql.createPool(db);
 
@@ -85,36 +86,88 @@ export const responderPorDocumento = async (req, res) => {
   }
 };
 
+const stopwords = [
+  "o", "a", "os", "as", "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas",
+  "um", "uma", "uns", "umas", "e", "é", "que", "para", "por", "com", "sem", "ao", "à", "se",
+  "sua", "seu", "suas", "seus", "ou", "como", "mas", "também", "já", "não", "sim", "sobre"
+];
+
 export const buscarRespostaDocumento = async (pergunta) => {
   if (!pergunta) return null;
   try {
     const [docs] = await conexao.query("SELECT conteudo FROM documentos");
-    let melhorTrecho = "";
-    let maiorSimilaridade = 0;
+    const tokenizer = new natural.WordTokenizer();
+    const perguntaTokens = tokenizer.tokenize(pergunta.toLowerCase())
+      .filter(t => t.length > 2 && !stopwords.includes(t));
+
+    let frasesPontuadas = [];
 
     docs.forEach(doc => {
       const frases = doc.conteudo.split(/[.!?]/);
-      frases.forEach(frase => {
-        // Similaridade simples: conta quantas palavras da pergunta aparecem na frase
-        let score = 0;
-        const palavrasPergunta = pergunta.toLowerCase().split(/\s+/);
-        palavrasPergunta.forEach(palavra => {
-          if (frase.toLowerCase().includes(palavra)) score++;
+      frases.forEach((frase, idx) => {
+        const fraseTokens = tokenizer.tokenize(frase.toLowerCase());
+        let pontuacao = 0;
+
+        perguntaTokens.forEach(token => {
+          if (fraseTokens.includes(token)) pontuacao += 2;
         });
-        if (score > maiorSimilaridade) {
-          maiorSimilaridade = score;
-          melhorTrecho = frase;
+
+        if (frase.toLowerCase().includes(pergunta.toLowerCase())) pontuacao += 5;
+        if (perguntaTokens.length > 0 && perguntaTokens.every(token => fraseTokens.includes(token))) pontuacao += 5;
+
+        if (frase.trim().length > 10) {
+          frasesPontuadas.push({ frase: frase.trim(), pontuacao, idx, frases });
         }
       });
     });
 
-    // Retorna se encontrou pelo menos uma palavra em comum
-    if (maiorSimilaridade > 0) {
-      return melhorTrecho.trim();
+    // Ordena por pontuação (maior primeiro)
+    const frasesOrdenadas = frasesPontuadas
+      .sort((a, b) => b.pontuacao - a.pontuacao);
+
+    if (frasesOrdenadas.length > 0 && frasesOrdenadas[0].pontuacao > 0) {
+      const melhor = frasesOrdenadas[0];
+      const { idx, frases, pontuacao } = melhor;
+      const contexto = [];
+
+      // Critério: só pega vizinhas se a pontuação for próxima (diferença máxima de 2 pontos)
+      const diffMax = 2;
+
+      // Frase anterior
+      if (idx > 0) {
+        const anterior = frases[idx - 1].trim();
+        const anteriorTokens = tokenizer.tokenize(anterior.toLowerCase());
+        let pontAnterior = 0;
+        perguntaTokens.forEach(token => {
+          if (anteriorTokens.includes(token)) pontAnterior += 2;
+        });
+        if (anterior.length > 10 && Math.abs(pontAnterior - pontuacao) <= diffMax && pontAnterior > 0) {
+          contexto.push(anterior);
+        }
+      }
+
+      // Sempre adiciona a melhor frase
+      contexto.push(melhor.frase);
+
+      // Frase seguinte
+      if (idx < frases.length - 1) {
+        const proxima = frases[idx + 1].trim();
+        const proximaTokens = tokenizer.tokenize(proxima.toLowerCase());
+        let pontProxima = 0;
+        perguntaTokens.forEach(token => {
+          if (proximaTokens.includes(token)) pontProxima += 2;
+        });
+        if (proxima.length > 10 && Math.abs(pontProxima - pontuacao) <= diffMax && pontProxima > 0) {
+          contexto.push(proxima);
+        }
+      }
+
+      // Se só a melhor frase for relevante, retorna só ela
+      return contexto.join(" ");
     } else {
-      return null;
+      return "Não encontrei uma resposta relevante nos documentos.";
     }
   } catch (erro) {
-    return null;
+    return "Erro ao buscar resposta nos documentos.";
   }
 };

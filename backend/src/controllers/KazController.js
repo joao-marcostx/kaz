@@ -35,7 +35,10 @@ export const responderKaz = async (req, res) => {
 
   // 1. Tenta buscar resposta nos documentos
   const respostaDoc = await buscarRespostaDocumento(mensagem);
-  if (respostaDoc) {
+  if (
+    respostaDoc &&
+    !respostaDoc.startsWith("Não encontrei uma resposta relevante")
+  ) {
     return res.json({ resposta: respostaDoc });
   }
 
