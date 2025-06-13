@@ -1,14 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import styles from "./Chat.module.css";
-import { useNavigate } from "react-router-dom";
+import { 
+  Send, 
+  Trash2, 
+  Upload, 
+  Bot, 
+  User, 
+  FileText, 
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  MessageSquare,
+  Calendar
+} from "lucide-react";
+import styles from './Chat.module.css';
 
 const Chat = () => {
   const [mensagem, setMensagem] = useState("");
   const [conversa, setConversa] = useState([]);
+  const [arquivo, setArquivo] = useState(null);
+  const [mensagemUpload, setMensagemUpload] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const chatBoxRef = useRef(null);
+  const fileInputRef = useRef(null);
 
-  const idUsuario = 1; // por enquanto fixo
-  const navigate = useNavigate();
+  const idUsuario = 1;
 
   useEffect(() => {
     const carregarConversas = async () => {
@@ -27,15 +44,26 @@ const Chat = () => {
     carregarConversas();
   }, []);
 
+  useEffect(() => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
+  }, [conversa, isTyping]);
+
   const enviarMensagem = async (e) => {
     e.preventDefault();
-    if (!mensagem.trim()) return;
+    if (!mensagem.trim() || isLoading) return;
 
+    setIsLoading(true);
+    setIsTyping(true);
     const novaConversa = [...conversa, { remetente: "Você", texto: mensagem }];
+    setConversa(novaConversa);
+    const mensagemAtual = mensagem;
+    setMensagem("");
 
     try {
       const response = await axios.post("http://localhost:3001/kaz", {
-        mensagem: mensagem,
+        mensagem: mensagemAtual,
       });
 
       const respostaKaz = response.data.resposta;
@@ -43,7 +71,7 @@ const Chat = () => {
       await axios.post("http://localhost:3001/salvar", {
         id_usuario: idUsuario,
         remetente: "usuario",
-        mensagem,
+        mensagem: mensagemAtual,
       });
 
       await axios.post("http://localhost:3001/salvar", {
@@ -52,34 +80,40 @@ const Chat = () => {
         mensagem: respostaKaz,
       });
 
-      novaConversa.push({ remetente: "Kaz", texto: respostaKaz });
-    // eslint-disable-next-line no-unused-vars
-    } catch (error) {
-      novaConversa.push({
-        remetente: "Kaz",
-        texto: "Erro ao se comunicar com o servidor.",
-      });
-    }
+      setTimeout(() => {
+        setIsTyping(false);
+        setConversa(prev => [...prev, { remetente: "Kaz", texto: respostaKaz }]);
+      }, 1000);
 
-    setConversa(novaConversa);
-    setMensagem("");
+    } catch (error) {
+      setTimeout(() => {
+        setIsTyping(false);
+        setConversa(prev => [...prev, {
+          remetente: "Kaz",
+          texto: "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
+        }]);
+      }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const deletarConversa = async () => {
-    console.log("Deletando conversa...");
     try {
       await axios.delete(`http://localhost:3001/deletarconversa/${idUsuario}`);
       setConversa([]);
+      setMensagemUpload("");
     } catch (error) {
       console.error("Erro ao deletar conversa:", error);
     }
   };
 
-  const [arquivo, setArquivo] = useState(null);
-  const [mensagemUpload, setMensagemUpload] = useState("");
-
   const handleArquivo = (e) => {
-    setArquivo(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) {
+      setArquivo(file);
+      setMensagemUpload("");
+    }
   };
 
   const handleUpload = async (e) => {
@@ -88,6 +122,7 @@ const Chat = () => {
       setMensagemUpload("Selecione um arquivo para enviar.");
       return;
     }
+
     const formData = new FormData();
     formData.append("arquivo", arquivo);
 
@@ -100,44 +135,188 @@ const Chat = () => {
         }
       );
       setMensagemUpload(response.data.mensagem);
-    // eslint-disable-next-line no-unused-vars
+      setArquivo(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (error) {
       setMensagemUpload("Erro ao enviar documento.");
     }
   };
 
+  const TypingIndicator = () => (
+    <div className={styles.typingIndicator}>
+      <div className={`${styles.messageAvatar} ${styles.messageAvatarBot}`}>
+        <Bot size={16} color="white" />
+      </div>
+      <div className={styles.typingBubble}>
+        <div className={styles.typingDots}>
+          <div className={styles.typingDot}></div>
+          <div className={styles.typingDot}></div>
+          <div className={styles.typingDot}></div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className={styles.container}>
-      <h2>Assistente Kaz</h2>
-      <div className={styles.chatBox}>
-        {conversa.map((msg, index) => (
-          <div
-            key={index}
-            className={msg.remetente === "Você" ? styles.usuario : styles.kaz}
-          >
-            <strong>{msg.remetente}:</strong> {msg.texto}
+      <div className={styles.chatWrapper}>
+        {/* Header */}
+        <div className={styles.header}>
+          <div className={styles.headerContent}>
+            <div className={styles.headerLeft}>
+              <div className={styles.avatar}>
+                <Sparkles size={24} color="white" />
+              </div>
+              <div className={styles.headerText}>
+                <h1>Assistente Kaz</h1>
+                <p>Seu assistente inteligente</p>
+              </div>
+            </div>
+            <div className={styles.headerActions}>
+              <button
+                onClick={deletarConversa}
+                className={styles.deleteButton}
+                title="Deletar conversa"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
-      <form onSubmit={enviarMensagem} className={styles.formulario}>
-        <input
-          type="text"
-          placeholder="Digite sua mensagem..."
-          value={mensagem}
-          onChange={(e) => setMensagem(e.target.value)}
-        />
-        
-        <button type="submit">Enviar</button>
-        <button type="button" onClick={deletarConversa}>Deletar Conversa</button>
-        <button type="submit" onClick={() => setMensagem("")}>limpar</button>
-        <button type="submit" onClick={() => navigate("/tarefas ")}>ver suas tarefas</button>
-      </form>
-      <div>
-        <form onSubmit={handleUpload}>
-          <input type="file" onChange={handleArquivo} accept=".txt,.pdf,.docx" />
-          <button type="submit">Enviar Documento</button>
-        </form>
-        {mensagemUpload && <p>{mensagemUpload}</p>}
+        </div>
+
+        {/* Chat Area */}
+        <div ref={chatBoxRef} className={styles.chatArea}>
+          {conversa.length === 0 ? (
+            <div className={styles.emptyState}>
+              <MessageSquare size={64} color="rgba(59, 130, 246, 0.5)" />
+              <h3>Bem-vindo ao Chat!</h3>
+              <p>Comece uma conversa com o Assistente Kaz</p>
+            </div>
+          ) : (
+            conversa.map((msg, index) => (
+              <div
+                key={index}
+                className={`${styles.messageContainer} ${
+                  msg.remetente === "Você" ? styles.messageContainerUser : ""
+                }`}
+              >
+                <div className={`${styles.messageAvatar} ${
+                  msg.remetente === "Você" 
+                    ? styles.messageAvatarUser
+                    : styles.messageAvatarBot
+                }`}>
+                  {msg.remetente === "Você" ? (
+                    <User size={16} color="white" />
+                  ) : (
+                    <Bot size={16} color="white" />
+                  )}
+                </div>
+                <div className={`${styles.messageBubble} ${
+                  msg.remetente === "Você"
+                    ? styles.messageBubbleUser
+                    : styles.messageBubbleBot
+                }`}>
+                  <p className={styles.messageText}>{msg.texto}</p>
+                </div>
+              </div>
+            ))
+          )}
+          {isTyping && <TypingIndicator />}
+        </div>
+
+        {/* Input Area */}
+        <div className={styles.inputArea}>
+          <form onSubmit={enviarMensagem} className={styles.inputForm}>
+            <div className={styles.inputRow}>
+              <div className={styles.inputWrapper}>
+                <input
+                  type="text"
+                  placeholder="Digite sua mensagem..."
+                  value={mensagem}
+                  onChange={(e) => setMensagem(e.target.value)}
+                  disabled={isLoading}
+                  className={styles.messageInput}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!mensagem.trim() || isLoading}
+                className={styles.sendButton}
+              >
+                <Send size={16} />
+                <span>Enviar</span>
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className={styles.actionButtons}>
+              <button
+                type="button"
+                onClick={() => setMensagem("")}
+                className={styles.actionButton}
+              >
+                Limpar
+              </button>
+              <button
+                type="button"
+                onClick={() => window.location.href = "/tarefas"}
+                className={styles.actionButton}
+              >
+                <Calendar size={16} />
+                <span>Ver Tarefas</span>
+              </button>
+            </div>
+          </form>
+
+          {/* File Upload */}
+          <div className={styles.uploadArea}>
+            <form onSubmit={handleUpload} className={styles.uploadForm}>
+              <div className={styles.uploadRow}>
+                <div className={styles.uploadInputWrapper}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleArquivo}
+                    accept=".txt,.pdf,.docx"
+                    className={styles.fileInput}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!arquivo}
+                  className={styles.uploadButton}
+                >
+                  <Upload size={16} />
+                  <span>Upload</span>
+                </button>
+              </div>
+              
+              {mensagemUpload && (
+                <div className={`${styles.statusMessage} ${
+                  mensagemUpload.includes("Erro") 
+                    ? styles.statusMessageError 
+                    : styles.statusMessageSuccess
+                }`}>
+                  {mensagemUpload.includes("Erro") ? (
+                    <AlertCircle size={16} />
+                  ) : (
+                    <CheckCircle2 size={16} />
+                  )}
+                  <span>{mensagemUpload}</span>
+                </div>
+              )}
+              
+              {arquivo && (
+                <div className={styles.fileSelected}>
+                  <FileText size={16} />
+                  <span>Arquivo selecionado: {arquivo.name}</span>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );
